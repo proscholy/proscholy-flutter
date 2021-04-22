@@ -7,6 +7,7 @@ import 'package:flutter_nearby_connections/flutter_nearby_connections.dart';
 import 'package:provider/provider.dart';
 import 'package:zpevnik/constants.dart';
 import 'package:zpevnik/custom/custom_appbar.dart';
+import 'package:zpevnik/platform/components/dialog.dart';
 import 'package:zpevnik/providers/data_provider.dart';
 import 'package:zpevnik/providers/sync_provider.dart';
 import 'package:zpevnik/screens/components/highlightable_row.dart';
@@ -14,6 +15,11 @@ import 'package:zpevnik/screens/song_lyric/song_lyric_screen.dart';
 import 'package:zpevnik/status_bar_wrapper.dart';
 import 'package:zpevnik/theme.dart';
 import 'package:zpevnik/platform/mixin.dart';
+
+final _connectConfirmationText =
+    'Chystáte se připojit k${unbreakableSpace}zařízení [DEVICE_NAME] a${unbreakableSpace}nechat si od${unbreakableSpace}něj automaticky přepínat písně ve${unbreakableSpace}Zpěvníku.\nChcete pokračovat?';
+final _shareConfirmationText =
+    'Chystáte se zařízením v${unbreakableSpace}okolí sdílet svůj stav Zpěvníku. Kdokoli v${unbreakableSpace}okolí se bude smět připojit a${unbreakableSpace}vždy se mu automaticky nastaví stejná píseň jako vám.\nChcete pokračovat?';
 
 class ConnectionsScreen extends StatefulWidget {
   @override
@@ -99,7 +105,7 @@ class _ConnectionsScreenState extends State<ConnectionsScreen> with PlatformStat
               //   ]),
               if (!provider.isAdvertiser)
                 TextButton(
-                  onPressed: () => setState(() => provider.isAdvertiser = true),
+                  onPressed: () => _shareAppState(provider),
                   child: Text('Sdílet stav mé aplikace zařízením v okolí'),
                   style: ButtonStyle(),
                 ),
@@ -190,8 +196,8 @@ class _ConnectionsScreenState extends State<ConnectionsScreen> with PlatformStat
           onPressed: () {
             switch (devices[index].state) {
               case SessionState.notConnected:
-                provider.nearbyService
-                    .invitePeer(deviceID: devices[index].deviceId, deviceName: devices[index].deviceName);
+                _connect(provider, devices[index]);
+
                 break;
               default:
                 break;
@@ -206,5 +212,35 @@ class _ConnectionsScreenState extends State<ConnectionsScreen> with PlatformStat
     syncProvider.run(deviceName);
 
     setState(() => _deviceName = deviceName);
+  }
+
+  void _connect(SyncProvider provider, Device device) async {
+    final confirmed = await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => PlatformAlert(
+        title: 'Připojit k zařízení',
+        child: Text(_connectConfirmationText.replaceFirst('[DEVICE_NAME]', device.deviceName)),
+        onCancel: () => false,
+        onConfirm: () => true,
+      ),
+    );
+
+    if (confirmed) provider.nearbyService.invitePeer(deviceID: device.deviceId, deviceName: device.deviceName);
+  }
+
+  void _shareAppState(SyncProvider provider) async {
+    final confirmed = await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => PlatformAlert(
+        title: 'Zahájení sdílení',
+        child: Text(_shareConfirmationText),
+        onCancel: () => false,
+        onConfirm: () => true,
+      ),
+    );
+
+    if (confirmed) setState(() => provider.isAdvertiser = true);
   }
 }

@@ -85,3 +85,64 @@ class PlatformDialog extends StatelessWidget with PlatformWidgetMixin {
     );
   }
 }
+
+// TODO: Merge with `PlatformDialog` class
+class PlatformAlert<T> extends StatelessWidget with PlatformWidgetMixin {
+  final String title;
+  final Widget child;
+
+  final T Function() onCancel;
+  final T Function() onConfirm;
+
+  const PlatformAlert({Key key, this.title, this.child, this.onCancel, this.onConfirm}) : super(key: key);
+
+  @override
+  Widget androidWidget(BuildContext context) {
+    final textStyle = AppTheme.of(context).bodyTextStyle;
+
+    return AlertDialog(
+      title: Text(title),
+      content: child,
+      actions: [
+        TextButton(
+          child: Text('Zrušit', style: textStyle.copyWith(color: Colors.red)),
+          onPressed: () => _onPressed(context, onCancel),
+        ),
+        TextButton(
+          child: Text('Pokračovat', style: textStyle),
+          onPressed: () => _onPressed(context, onConfirm),
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget iOSWidget(BuildContext context) {
+    final textStyle = AppTheme.of(context).bodyTextStyle;
+
+    return CupertinoTheme(
+      data: AppTheme.of(context).cupertinoTheme, // fixme: is set again, because it is lost somewhere
+      child: CupertinoAlertDialog(
+        title: Text(title),
+        content: child,
+        actions: [
+          TextButton(
+            child: Text('Zrušit', style: textStyle.copyWith(color: Colors.red)),
+            onPressed: () => _onPressed(context, onCancel),
+          ),
+          TextButton(
+            child: Text('Pokračovat', style: textStyle),
+            onPressed: () => _onPressed(context, onConfirm),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _onPressed(BuildContext context, T Function() function) {
+    T returnValue;
+    if (function != null) returnValue = function();
+
+    Navigator.of(context).pop(returnValue);
+  }
+}
