@@ -17,6 +17,8 @@ class SyncProvider extends ChangeNotifier {
   StreamSubscription _subscription;
   StreamSubscription _dataSubscription;
 
+  String lastMessage;
+
   List<Device> get availableDevices =>
       _availableDevices?.where((device) => !_connectedDevices.contains(device))?.toList() ?? List.empty();
   List<Device> get connectedDevices => _connectedDevices ?? List.empty();
@@ -78,12 +80,27 @@ class SyncProvider extends ChangeNotifier {
 
   void sendMessage(String message) {
     // only advertisers send messsages
-    if (isAdvertiser) for (final device in connectedDevices) nearbyService.sendMessage(device.deviceId, message);
+    if (isAdvertiser) {
+      for (final device in connectedDevices) nearbyService.sendMessage(device.deviceId, message);
+
+      lastMessage = message;
+    }
   }
 
   void _stateChanged(List<Device> devices) {
     _availableDevices = devices;
-    _connectedDevices = devices.where((device) => device.state == SessionState.connected).toList();
+
+    final connectedDevices = [];
+
+    for (final device in devices) {
+      if (device.state == SessionState.connected) {
+        connectedDevices.add(device);
+        if (isAdvertiser && lastMessage != null && !_connectedDevices.contains(device))
+          nearbyService.sendMessage(device.deviceId, lastMessage);
+      }
+    }
+
+    _connectedDevices = connectedDevices;
 
     notifyListeners();
   }
