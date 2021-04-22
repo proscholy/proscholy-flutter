@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:zpevnik/constants.dart';
 import 'package:zpevnik/custom/custom_appbar.dart';
 import 'package:zpevnik/platform/components/dialog.dart';
+import 'package:zpevnik/platform/components/text_field.dart';
 import 'package:zpevnik/providers/data_provider.dart';
 import 'package:zpevnik/providers/sync_provider.dart';
 import 'package:zpevnik/screens/components/highlightable_row.dart';
@@ -95,14 +96,17 @@ class _ConnectionsScreenState extends State<ConnectionsScreen> with PlatformStat
             children: [
               _infoText(context, provider),
               if (provider.isAdvertiser) _advertiserList(context, provider) else _browserList(context, provider),
-              // if (!provider.isAdvertiser)
-              //   Row(children: [
-              //     Text('Jméno zařízení'),
-              //     CupertinoTextField(
-              //       controller: TextEditingController()..text = _deviceName,
-              //       onSubmitted: (deviceName) => _deviceNameChanged(deviceName),
-              //     )
-              //   ]),
+              if (!provider.isAdvertiser)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Jméno zařízení', style: AppTheme.of(context).captionTextStyle),
+                    PlatformTextField(
+                      controller: TextEditingController()..text = _deviceName,
+                      // onSubmitted: (deviceName) => _deviceNameChanged(deviceName),
+                    ),
+                  ],
+                ),
               if (!provider.isAdvertiser)
                 TextButton(
                   onPressed: () => _shareAppState(provider),
