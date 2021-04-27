@@ -103,7 +103,7 @@ class _ConnectionsScreenState extends State<ConnectionsScreen> with PlatformStat
                     Text('Jméno zařízení', style: AppTheme.of(context).captionTextStyle),
                     PlatformTextField(
                       controller: TextEditingController()..text = _deviceName,
-                      // onSubmitted: (deviceName) => _deviceNameChanged(deviceName),
+                      onSubmitted: (deviceName) => _deviceNameChanged(deviceName),
                     ),
                   ],
                 ),
